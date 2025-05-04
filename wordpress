@@ -1,0 +1,238 @@
+To set up a minimal WordPress website on AlmaLinux using Nginx, you can follow these streamlined steps. This guide assumes a fresh AlmaLinux server and basic command-line knowledge.
+⚙️ STEP 1: Update System
+
+sudo dnf update -y
+sudo dnf install epel-release -y
+
+🧱 STEP 2: Install Required Packages
+
+Install Nginx, PHP, and MariaDB (or MySQL):
+
+# Nginx
+sudo dnf install nginx -y
+
+# MariaDB (drop-in MySQL replacement)
+sudo dnf install mariadb-server -y
+
+# PHP + required modules
+sudo dnf install php php-fpm php-mysqlnd php-gd php-xml php-mbstring php-json php-curl -y
+
+🔥 STEP 3: Enable and Start Services
+
+sudo systemctl enable --now nginx
+sudo systemctl enable --now mariadb
+sudo systemctl enable --now php-fpm
+
+🛡️ STEP 4: Secure MariaDB
+
+sudo mysql_secure_installation
+
+Follow prompts: set root password, remove anonymous users, disallow root remote login, remove test DB.
+🗃️ STEP 5: Create WordPress Database
+
+sudo mysql -u root -p
+
+Then in MySQL shell:
+
+CREATE DATABASE wordpress;
+CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+🌐 STEP 6: Configure PHP-FPM for Nginx
+
+Edit /etc/php-fpm.d/www.conf:
+
+sudo nano /etc/php-fpm.d/www.conf
+
+Change:
+
+user = nginx
+group = nginx
+
+Then restart PHP-FPM:
+
+sudo systemctl restart php-fpm
+
+🧩 STEP 7: Download WordPress
+
+cd /tmp
+curl -O https://wordpress.org/latest.tar.gz
+tar -xzf latest.tar.gz
+sudo mv wordpress /usr/share/nginx/html/
+sudo chown -R nginx:nginx /usr/share/nginx/html/wordpress
+
+📝 STEP 8: Configure Nginx for WordPress
+
+Create a minimal config at /etc/nginx/conf.d/wordpress.conf:
+
+server {
+    listen 80;
+    server_name your_domain_or_ip;
+
+    root /usr/share/nginx/html/wordpress;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php-fpm/www.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires max;
+        log_not_found off;
+    }
+}
+
+Then test and reload Nginx:
+
+sudo nginx -t
+sudo systemctl reload nginx
+
+📂 STEP 9: Configure WordPress
+
+cd /usr/share/nginx/html/wordpress
+sudo cp wp-config-sample.php wp-config.php
+sudo nano wp-config.php
+
+Set the database credentials:
+
+define('DB_NAME', 'wordpress');
+define('DB_USER', 'wpuser');
+define('DB_PASSWORD', 'your_password');
+define('DB_HOST', 'localhost');
+
+✅ FINAL STEP: Finish via Web Installer
+
+Visit http://your_server_ip_or_domain in your browser and complete the WordPress 
+
+
+
+
+Minimal Nginx Config for WordPress
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html/wordpress;
+    index index.php;
+
+    location / {
+        try_files $uri /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php-fpm/www.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+
+
+
+
+
+Minimal WordPress Setup on AlmaLinux (Apache + MariaDB + PHP-FPM)
+✅ STEP 1: Install Required Packages
+
+sudo dnf install httpd mariadb-server php php-fpm php-mysqlnd -y
+
+Start and enable all necessary services:
+
+sudo systemctl enable --now httpd php-fpm mariadb
+
+✅ STEP 2: Secure MariaDB
+
+sudo mysql_secure_installation
+
+    Set root password
+
+    Remove anonymous users
+
+    Disallow remote root login
+
+    Remove test DB
+
+    Accept defaults to reload privileges
+
+✅ STEP 3: Create WordPress Database and User
+
+Run the following in terminal (or save it as wp-db.sql and use sudo mysql < wp-db.sql):
+
+CREATE DATABASE wordpress;
+CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost';
+FLUSH PRIVILEGES;
+
+Command:
+
+sudo mysql -u root -p -e "CREATE DATABASE wordpress; CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'your_password'; GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost'; FLUSH PRIVILEGES;"
+
+✅ STEP 4: Download and Setup WordPress
+
+cd /var/www/
+sudo curl -O https://wordpress.org/latest.tar.gz
+sudo tar -xzf latest.tar.gz
+sudo chown -R apache:apache wordpress
+
+Copy and configure WordPress:
+
+cd wordpress
+sudo cp wp-config-sample.php wp-config.php
+sudo nano wp-config.php
+
+Edit these lines:
+
+define('DB_NAME', 'wordpress');
+define('DB_USER', 'wpuser');
+define('DB_PASSWORD', 'your_password');
+define('DB_HOST', 'localhost');
+
+✅ STEP 5: Minimal Apache Config for WordPress
+
+Create a config at /etc/httpd/conf.d/wordpress.conf:
+
+<VirtualHost *:80>
+    DocumentRoot /var/www/wordpress
+    ServerName your_domain_or_ip
+
+    <Directory /var/www/wordpress>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    <FilesMatch \.php$>
+        SetHandler "proxy:unix:/run/php-fpm/www.sock|fcgi://localhost/"
+    </FilesMatch>
+</VirtualHost>
+
+✅ STEP 6: Enable mod_rewrite (for pretty permalinks)
+
+sudo dnf install -y mod_rewrite
+
+Create .htaccess in /var/www/wordpress/:
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+✅ STEP 7: Set Permissions and Restart Services
+
+sudo chown -R apache:apache /var/www/wordpress
+sudo systemctl restart httpd php-fpm
+
+✅ STEP 8: Open in Browser
+
+Navigate to http://your_server_ip to finish the WordPress installation via web UI.
