@@ -1,10 +1,10 @@
 To set up a minimal WordPress website on AlmaLinux using Nginx, you can follow these streamlined steps. This guide assumes a fresh AlmaLinux server and basic command-line knowledge.
-⚙️ STEP 1: Update System
+ STEP 1: Update System
 
 sudo dnf update -y
 sudo dnf install epel-release -y
 
-🧱 STEP 2: Install Required Packages
+ STEP 2: Install Required Packages
 
 Install Nginx, PHP, and MariaDB (or MySQL):
 
@@ -17,18 +17,18 @@ sudo dnf install mariadb-server -y
 # PHP + required modules
 sudo dnf install php php-fpm php-mysqlnd php-gd php-xml php-mbstring php-json php-curl -y
 
-🔥 STEP 3: Enable and Start Services
+ STEP 3: Enable and Start Services
 
 sudo systemctl enable --now nginx
 sudo systemctl enable --now mariadb
 sudo systemctl enable --now php-fpm
 
-🛡️ STEP 4: Secure MariaDB
+ STEP 4: Secure MariaDB
 
 sudo mysql_secure_installation
 
 Follow prompts: set root password, remove anonymous users, disallow root remote login, remove test DB.
-🗃️ STEP 5: Create WordPress Database
+ STEP 5: Create WordPress Database
 
 sudo mysql -u root -p
 
@@ -39,8 +39,7 @@ CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'your_password';
 GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
-
-🌐 STEP 6: Configure PHP-FPM for Nginx
+ STEP 6: Configure PHP-FPM for Nginx
 
 Edit /etc/php-fpm.d/www.conf:
 
@@ -55,7 +54,7 @@ Then restart PHP-FPM:
 
 sudo systemctl restart php-fpm
 
-🧩 STEP 7: Download WordPress
+ STEP 7: Download WordPress
 
 cd /tmp
 curl -O https://wordpress.org/latest.tar.gz
@@ -63,7 +62,7 @@ tar -xzf latest.tar.gz
 sudo mv wordpress /usr/share/nginx/html/
 sudo chown -R nginx:nginx /usr/share/nginx/html/wordpress
 
-📝 STEP 8: Configure Nginx for WordPress
+ STEP 8: Configure Nginx for WordPress
 
 Create a minimal config at /etc/nginx/conf.d/wordpress.conf:
 
@@ -95,7 +94,7 @@ Then test and reload Nginx:
 sudo nginx -t
 sudo systemctl reload nginx
 
-📂 STEP 9: Configure WordPress
+ STEP 9: Configure WordPress
 
 cd /usr/share/nginx/html/wordpress
 sudo cp wp-config-sample.php wp-config.php
@@ -140,7 +139,7 @@ server {
 
 
 Minimal WordPress Setup on AlmaLinux (Apache + MariaDB + PHP-FPM)
-✅ STEP 1: Install Required Packages
+ STEP 1: Install Required Packages
 
 sudo dnf install httpd mariadb-server php php-fpm php-mysqlnd -y
 
@@ -148,7 +147,7 @@ Start and enable all necessary services:
 
 sudo systemctl enable --now httpd php-fpm mariadb
 
-✅ STEP 2: Secure MariaDB
+ STEP 2: Secure MariaDB
 
 sudo mysql_secure_installation
 
@@ -162,7 +161,7 @@ sudo mysql_secure_installation
 
     Accept defaults to reload privileges
 
-✅ STEP 3: Create WordPress Database and User
+ STEP 3: Create WordPress Database and User
 
 Run the following in terminal (or save it as wp-db.sql and use sudo mysql < wp-db.sql):
 
@@ -175,7 +174,7 @@ Command:
 
 sudo mysql -u root -p -e "CREATE DATABASE wordpress; CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'your_password'; GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost'; FLUSH PRIVILEGES;"
 
-✅ STEP 4: Download and Setup WordPress
+ STEP 4: Download and Setup WordPress
 
 cd /var/www/
 sudo curl -O https://wordpress.org/latest.tar.gz
@@ -195,7 +194,7 @@ define('DB_USER', 'wpuser');
 define('DB_PASSWORD', 'your_password');
 define('DB_HOST', 'localhost');
 
-✅ STEP 5: Minimal Apache Config for WordPress
+ STEP 5: Minimal Apache Config for WordPress
 
 Create a config at /etc/httpd/conf.d/wordpress.conf:
 
@@ -213,7 +212,7 @@ Create a config at /etc/httpd/conf.d/wordpress.conf:
     </FilesMatch>
 </VirtualHost>
 
-✅ STEP 6: Enable mod_rewrite (for pretty permalinks)
+ STEP 6: Enable mod_rewrite (for pretty permalinks)
 
 sudo dnf install -y mod_rewrite
 
@@ -228,11 +227,11 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.php [L]
 </IfModule>
 
-✅ STEP 7: Set Permissions and Restart Services
+STEP 7: Set Permissions and Restart Services
 
 sudo chown -R apache:apache /var/www/wordpress
 sudo systemctl restart httpd php-fpm
 
-✅ STEP 8: Open in Browser
+ STEP 8: Open in Browser
 
 Navigate to http://your_server_ip to finish the WordPress installation via web UI.
